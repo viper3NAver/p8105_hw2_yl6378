@@ -1,0 +1,17 @@
+---
+title: "p8105_hw2"
+author: "yl6378"
+date: "2026-10-07"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Problem 1
+
+# Problem 2
+
+# Problem 3
