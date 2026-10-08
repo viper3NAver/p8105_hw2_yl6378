@@ -8,6 +8,7 @@ output: github_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(readxl)
 ```
 
 # Problem 1
@@ -75,7 +76,7 @@ subway_long = subway_df |>
   )
 ```
 
-The route variables are reshaped from wide to long format. The original `Route1` through `Route11` columns are converted into two variables: `route_number`, which indicates the original route column, and `route_name`, which contains the subway route served.
+The route variables are reshaped from wide to long format. The original `Route1` through `Route11` columns are converted into two variables: `route_number` indicates the original route column, and `route_name`, which contains the subway route served
 
 ```{r}
 subway_long |>
@@ -96,5 +97,139 @@ subway_long |>
 Among the stations that serve the A train, 17 are ADA compliant
 
 # Problem 2
+```{r}
+list.files("data")
+read_excel(
+  "data/202610 Trash Wheel Collection Data.xlsx",
+  sheet = "Mr. Trash Wheel",
+  n_max = 12,
+  col_names = FALSE
+)
+```
 
+```{r}
+mr_trash = read_excel(
+  "data/202610 Trash Wheel Collection Data.xlsx",
+  sheet = "Mr. Trash Wheel",
+  range = "A2:N1000"
+) |>
+  janitor::clean_names() |>
+  drop_na(dumpster) |>
+  mutate(
+    sports_balls = as.integer(round(sports_balls)),
+    trash_wheel = "Mr. Trash Wheel"
+  )
+dim(mr_trash)
+names(mr_trash)
+```
+
+```{r}
+prof_trash = read_excel(
+  "data/202610 Trash Wheel Collection Data.xlsx",
+  sheet = "Professor Trash Wheel",
+  range = "A2:N1000"
+) |>
+  janitor::clean_names() |>
+  drop_na(dumpster) |>
+  mutate(
+    trash_wheel = "Professor Trash Wheel"
+  )
+dim(prof_trash)
+names(prof_trash)
+```
+
+```{r}
+gwynnda = read_excel(
+  "data/202610 Trash Wheel Collection Data.xlsx",
+  sheet = "Gwynnda the Good Wheel of the W",
+  range = "A2:N1000"
+) |>
+  janitor::clean_names() |>
+  drop_na(dumpster) |>
+  mutate(
+    trash_wheel = "Gwynnda the Good Wheel of the W"
+  )
+dim(gwynnda)
+names(gwynnda)
+```
+
+```{r}
+numeric_vars = c(
+  "weight_tons",
+  "volume_cubic_yards",
+  "plastic_bottles",
+  "polystyrene",
+  "cigarette_butts",
+  "glass_bottles",
+  "plastic_bags",
+  "wrappers",
+  "homes_powered"
+)
+
+mr_trash = mr_trash |>
+  mutate(
+    year = as.integer(year),
+    across(any_of(numeric_vars), as.numeric)
+  )
+
+prof_trash = prof_trash |>
+  mutate(
+    year = as.integer(year),
+    across(any_of(numeric_vars), as.numeric)
+  )
+
+gwynnda = gwynnda |>
+  mutate(
+    year = as.integer(year),
+    across(any_of(numeric_vars), as.numeric)
+  )
+
+trash_wheel_df = bind_rows(
+  mr_trash,
+  prof_trash,
+  gwynnda
+)
+```
+
+```{r}
+mr_trash = mr_trash |>
+  mutate(trash_wheel = "Mr. Trash Wheel")
+
+prof_trash = prof_trash |>
+  mutate(trash_wheel = "Professor Trash Wheel")
+
+gwynnda = gwynnda |>
+  mutate(trash_wheel = "Gwynnda")
+trash_wheel_df = bind_rows(
+  mr_trash,
+  prof_trash,
+  gwynnda
+)
+```
+
+```{r}
+unique(trash_wheel_df$trash_wheel)
+```
+
+```{r}
+trash_wheel_df |>
+  filter(trash_wheel == "Professor Trash Wheel") |>
+  summarize(
+    total_weight = sum(weight_tons, na.rm = TRUE)
+  )
+```
+Total is 294.96 tons.
+
+```{r}
+trash_wheel_df |>
+  filter(
+    trash_wheel == "Gwynnda",
+    year == 2022,
+    month == "June"
+  ) |>
+  summarize(
+    total_cigarette_butts = sum(cigarette_butts, na.rm = TRUE)
+  )
+```
+Total is 18120 cigarette butts.
 # Problem 3
