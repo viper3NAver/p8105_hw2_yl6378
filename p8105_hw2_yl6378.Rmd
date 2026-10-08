@@ -270,14 +270,17 @@ baseline = read_csv("data/MCI_baseline.csv") |>
     mci_onset_age = age_at_the_onset_of_mci_missing_if_a_subject_remains_mci_free_during_the_follow_up_period
   ) |>
   mutate(
+    baseline_age = as.numeric(baseline_age),
+    education = as.numeric(education),
+    mci_onset_age = as.numeric(mci_onset_age),
     sex = factor(
       sex,
-      levels = c(0, 1),
+      levels = c("0", "1"),
       labels = c("Female", "Male")
     ),
     apoe4 = factor(
       apoe4,
-      levels = c(0, 1),
+      levels = c("0", "1"),
       labels = c("Non-carrier", "Carrier")
     )
   )
@@ -315,7 +318,7 @@ amyloid_long = amyloid |>
   ) |>
   mutate(
     study_id = as.character(study_id),
-    amyloid_ratio = as.numeric(amyloid_ratio)
+    amyloid_ratio = readr::parse_number(as.character(amyloid_ratio))
   )
 ```
 
@@ -419,4 +422,41 @@ write_csv(
 ```
 
 The combined dataset was exported as `mci_amyloid_clean.csv` in the `data` directory.
+
+```{r}
+baseline_summary = tibble(
+  recruited = nrow(baseline_clean),
+  developed_mci = baseline_clean |>
+    filter(!is.na(mci_onset_age)) |>
+    nrow(),
+  mean_baseline_age = mean(
+    baseline_clean$baseline_age,
+    na.rm = TRUE
+  ),
+  female_apoe4_prop = baseline_clean |>
+    filter(sex == "Female") |>
+    summarize(
+      prop = mean(apoe4 == "Carrier", na.rm = TRUE)
+    ) |>
+    pull(prop)
+)
+
+baseline_summary
+```
+
+```{r}
+c(
+  baseline_only = baseline_only |>
+    distinct(study_id) |>
+    nrow(),
+
+  amyloid_only = amyloid_only |>
+    distinct(study_id) |>
+    nrow(),
+
+  combined_participants = combined_df |>
+    distinct(study_id) |>
+    nrow()
+)
+```
 
