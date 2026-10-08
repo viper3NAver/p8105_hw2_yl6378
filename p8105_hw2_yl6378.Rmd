@@ -240,3 +240,183 @@ dim(trash_wheel_df)
 After cleaning and combining the three Trash Wheel datasets, the final dataset contains 1,269 observations and 19 variables. The dataset includes information on dumpster number, month, year, date, trash weight, volume, counts of different types of waste, homes powered, and the Trash Wheel source. Rows without dumpster-specific data were removed, variable names and types were standardized, and a trash_wheel variable was added to identify whether an observation came from Mr. Trash Wheel, Professor Trash Wheel, or Gwynnda. For Mr. Trash Wheel, the number of sports balls was rounded and converted to an integer.
 
 # Problem 3
+```{r}
+list.files("data")
+```
+
+```{r}
+baseline = read_csv("data/MCI_baseline.csv")
+
+names(baseline)
+dim(baseline)
+```
+
+```{r}
+amyloid = read_csv("data/mci_amyloid.csv")
+
+names(amyloid)
+dim(amyloid)
+```
+
+```{r}
+baseline = read_csv("data/MCI_baseline.csv") |>
+  janitor::clean_names() |>
+  rename(
+    study_id = x1,
+    baseline_age = age_at_the_study_baseline,
+    sex = x1_male_0_female,
+    education = years_of_education,
+    apoe4 = x1_apoe4_carrier_0_apoe4_non_carrier,
+    mci_onset_age = age_at_the_onset_of_mci_missing_if_a_subject_remains_mci_free_during_the_follow_up_period
+  ) |>
+  mutate(
+    sex = factor(
+      sex,
+      levels = c(0, 1),
+      labels = c("Female", "Male")
+    ),
+    apoe4 = factor(
+      apoe4,
+      levels = c(0, 1),
+      labels = c("Non-carrier", "Carrier")
+    )
+  )
+```
+
+```{r}
+baseline_clean = baseline |>
+  filter(
+    is.na(mci_onset_age) |
+      mci_onset_age > baseline_age
+  )
+```
+
+```{r}
+amyloid = read_csv(
+  "data/mci_amyloid.csv",
+  skip = 2,
+  col_names = c(
+    "study_id",
+    "baseline",
+    "time_2",
+    "time_4",
+    "time_6",
+    "time_8"
+  )
+)
+```
+
+```{r}
+amyloid_long = amyloid |>
+  pivot_longer(
+    baseline:time_8,
+    names_to = "visit",
+    values_to = "amyloid_ratio"
+  ) |>
+  mutate(
+    study_id = as.character(study_id),
+    amyloid_ratio = as.numeric(amyloid_ratio)
+  )
+```
+
+Number of participants recruited
+```{r}
+nrow(baseline_clean)
+```
+
+Number who developed MCI during follow-up
+```{r}
+baseline_clean |>
+  filter(!is.na(mci_onset_age)) |>
+  nrow()
+```
+
+Average baseline age
+```{r}
+baseline_clean |>
+  summarize(
+    mean_baseline_age = mean(baseline_age, na.rm = TRUE)
+  )
+```
+
+Proportion of women who are APOE4 carriers
+```{r}
+baseline_clean |>
+  filter(sex == "Female") |>
+  summarize(
+    prop_apoe4_carrier = mean(apoe4 == "Carrier", na.rm = TRUE)
+  )
+```
+
+The longitudinal amyloid biomarker dataset was imported by skipping the first two rows of header information and assigning meaningful variable names. The repeated biomarker measurements were then reshaped from wide to long format so that each row represents one participant at one visit, with separate variables for visit and amyloid β 42/40 ratio.
+
+```{r}
+baseline_clean = baseline_clean |>
+  mutate(
+    study_id = as.character(study_id)
+  )
+
+amyloid_long = amyloid_long |>
+  mutate(
+    study_id = as.character(study_id)
+  )
+```
+
+To determine whether all participants appeared in both datasets, I compared the study IDs in the baseline and amyloid datasets.
+
+```{r}
+baseline_only = baseline_clean |>
+  anti_join(
+    amyloid_long,
+    by = "study_id"
+  )
+
+amyloid_only = amyloid_long |>
+  anti_join(
+    baseline_clean,
+    by = "study_id"
+  )
+```
+
+```{r}
+baseline_only_n = baseline_only |>
+  distinct(study_id) |>
+  nrow()
+
+amyloid_only_n = amyloid_only |>
+  distinct(study_id) |>
+  nrow()
+
+baseline_only_n
+amyloid_only_n
+```
+
+There were `r baseline_only_n` participants who appeared in the baseline dataset but not in the amyloid dataset, and `r amyloid_only_n` participants who appeared in the amyloid dataset but not in the baseline dataset.
+
+```{r}
+combined_df = baseline_clean |>
+  inner_join(
+    amyloid_long,
+    by = "study_id"
+  )
+```
+
+The demographic and longitudinal biomarker datasets were combined using an inner join on `study_id`, so that only participants appearing in both datasets were retained. The resulting dataset contains participant demographic characteristics, baseline age, sex, education, APOE4 carrier status, information on MCI onset, visit timing, and longitudinal amyloid β 42/40 ratio measurements.
+
+```{r}
+combined_df |>
+  distinct(study_id) |>
+  nrow()
+
+dim(combined_df)
+```
+
+```{r}
+write_csv(
+  combined_df,
+  "data/mci_amyloid_clean.csv"
+)
+```
+
+The combined dataset was exported as `mci_amyloid_clean.csv` in the `data` directory.
+
