@@ -97,15 +97,6 @@ subway_long |>
 Among the stations that serve the A train, 17 are ADA compliant
 
 # Problem 2
-```{r}
-list.files("data")
-read_excel(
-  "data/202610 Trash Wheel Collection Data.xlsx",
-  sheet = "Mr. Trash Wheel",
-  n_max = 12,
-  col_names = FALSE
-)
-```
 
 ```{r}
 mr_trash = read_excel(
@@ -237,7 +228,7 @@ Total is 18120 cigarette butts.
 dim(trash_wheel_df)
 ```
 
-After cleaning and combining the three Trash Wheel datasets, the final dataset contains 1,269 observations and 19 variables. The dataset includes information on dumpster number, month, year, date, trash weight, volume, counts of different types of waste, homes powered, and the Trash Wheel source. Rows without dumpster-specific data were removed, variable names and types were standardized, and a trash_wheel variable was added to identify whether an observation came from Mr. Trash Wheel, Professor Trash Wheel, or Gwynnda. For Mr. Trash Wheel, the number of sports balls was rounded and converted to an integer.
+After cleaning and combining the three Trash Wheel datasets, the final dataset contains 1,269 observations and 17 variables. The dataset includes information on dumpster number, month, year, date, trash weight, volume, counts of different types of waste, homes powered, and the Trash Wheel source. Rows without dumpster-specific data were removed, variable names and types were standardized, and a trash_wheel variable was added to identify whether an observation came from Mr. Trash Wheel, Professor Trash Wheel, or Gwynnda. For Mr. Trash Wheel, the number of sports balls was rounded and converted to an integer.
 
 # Problem 3
 ```{r}
